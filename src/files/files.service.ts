@@ -24,7 +24,7 @@ export class FilesService {
       requestBody: {
         name: file.originalname,
         mimeType: file.mimetype,
-        parents: ['1NY7tufXb81iGtTp4r5n0C-eScd2xQlk_'],
+        parents: ['1GoAJKiNIOsHJwPqnjOlLChl5Lxbvi9sb'],
       },
       media: {
         mimeType: file.mimetype,

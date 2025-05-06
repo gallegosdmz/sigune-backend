@@ -9,6 +9,7 @@ import { ValidPermissions } from 'src/auth/interfaces';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { ChangePositionContentDto } from './dto/change-position-content.dto';
+import { GetContentsByDateDto } from './dto/get-report-contents.dto';
 
 @Controller('scripts')
 export class ScriptsController {
@@ -30,6 +31,14 @@ export class ScriptsController {
     @GetUser() user: User
   ) {
     return this.scriptsService.createContent( createContentDto, user )
+  }
+
+  @Post('count-contents-by-date')
+  @Auth(ValidPermissions.admin_user)
+  findCountContentsByDate(
+    @Body() getContentsByDateDto: GetContentsByDateDto
+  ) {
+    return this.scriptsService.countContentsByDateRange(getContentsByDateDto.startDate, getContentsByDateDto.endDate);
   }
 
   @Get()

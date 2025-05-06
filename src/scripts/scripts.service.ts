@@ -197,7 +197,6 @@ export class ScriptsService {
   }
 
   async findOneWithContentDisapproved() {
-    console.log('entro aca');
     try {
       const contents = await this.contentRepository.find({
         where: {
@@ -265,14 +264,9 @@ export class ScriptsService {
     if ( updateContentDto.script ) {
       await this.findOne( updateContentDto.script );
     }
-
-    const newContent = {
-      ...updateContentDto,
-      user
-    }
     
     try {
-      Object.assign( content, newContent );
+      Object.assign( content, updateContentDto );
       await this.contentRepository.save( content );
 
       return this.findOneContent( id );
@@ -296,13 +290,55 @@ export class ScriptsService {
     }
   }
 
-  async countContentsByDateRange(startDate: Date, endDate: Date): Promise<number> {
-    return this.contentRepository
+  async countContentsByDateRange(startDate: Date, endDate: Date) {
+    const contents = await this.contentRepository
       .createQueryBuilder('content')
       .where('content.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
       .andWhere('content.isDeleted = false')
-      .getCount();
+      .limit(700)
+      .getMany(); // obtenemos los contenidos limitados
+  
+    const total = contents.length;
+  
+    const byDependenceMap = new Map<string, number>();
+    const byClassificationMap = new Map<string, number>();
+  
+    for (const content of contents) {
+      // Dependence count
+      if (content.dependence) {
+        byDependenceMap.set(
+          content.dependence,
+          (byDependenceMap.get(content.dependence) || 0) + 1,
+        );
+      }
+  
+      // Classification count
+      if (content.classification) {
+        byClassificationMap.set(
+          content.classification,
+          (byClassificationMap.get(content.classification) || 0) + 1,
+        );
+      }
+    }
+  
+    const byDependence = Array.from(byDependenceMap.entries()).map(([dependence, count]) => ({
+      dependence,
+      count,
+    }));
+  
+    const byClassification = Array.from(byClassificationMap.entries()).map(([classification, count]) => ({
+      classification,
+      count,
+    }));
+  
+    return {
+      total,
+      byDependence,
+      byClassification,
+    };
   }
+  
+  
 
   async getWeeklyReport() {
     const today = new Date()

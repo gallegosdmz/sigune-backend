@@ -25,5 +25,10 @@ export enum ValidPermissions {
     delete_content = 'delete_content',
     view_contents = 'view_contents',
     view_content = 'view_content',
+    create_newsletter = 'create_newsletter',
+    update_newsletter = 'update_newsletter',
+    delete_newsletter = 'delete_newsletter',
+    view_newsletters = 'view_newsletters',
+    view_newsletter = 'view_newsletter',
     check_auth_status = 'check_auth_status',
 }
