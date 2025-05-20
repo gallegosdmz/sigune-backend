@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsInt, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 import { User } from "src/auth/entities/user.entity";
 
 export class CreateContentDto {
@@ -15,10 +15,15 @@ export class CreateContentDto {
     title: string;
 
     @IsString()
+    @MinLength(50)
+    head: string;
+
+    @IsString()
     @IsOptional()
     textContent: string;
 
     @IsString()
+    @IsOptional()
     dependence: string;
 
     @IsString()

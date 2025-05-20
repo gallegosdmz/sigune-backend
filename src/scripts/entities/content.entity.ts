@@ -14,10 +14,13 @@ export class Content {
     title: string;
 
     @Column('text')
+    head: string;
+
+    @Column('text')
     textContent: string;
 
-    @Column('varchar', {length: 150})
-    dependence: string;
+    @Column('varchar', {length: 150, nullable: true})
+    dependence?: string;
 
     @Column('varchar', {length: 150})
     classification: string;

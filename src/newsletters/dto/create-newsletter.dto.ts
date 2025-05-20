@@ -1,6 +1,6 @@
 import { IsString, MaxLength } from "class-validator";
 
-export class CreateNewsletterDto {
+export class CreateNewsletterDto {    
     @IsString()
     textContent: string;
 

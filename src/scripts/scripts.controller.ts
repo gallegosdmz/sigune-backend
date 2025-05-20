@@ -119,6 +119,14 @@ export class ScriptsController {
     return this.scriptsService.findAllContentsForScript( id );
   }
 
+  @Get('newsletters-for-period/:period')
+  @Auth(ValidPermissions.view_content)
+  findAllNewsLettersForScript(
+    @Param('period', ParseIntPipe) period: number
+  ) {
+    return this.scriptsService.findAllNewsLettersForPeriod(period);
+  }
+
   @Get(':id')
   @Auth( ValidPermissions.view_script )
   findOne(

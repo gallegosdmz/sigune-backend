@@ -3,7 +3,7 @@ import { CreateScriptDto } from './dto/create-script.dto';
 import { UpdateScriptDto } from './dto/update-script.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Script } from './entities/script.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { Between, DataSource, In, Repository } from 'typeorm';
 import { Content } from './entities/content.entity';
 import { handleDBErrors } from 'src/utils';
 import { User } from 'src/auth/entities/user.entity';
@@ -179,6 +179,37 @@ export class ScriptsService {
     }
   }
 
+  async findAllNewsLettersForPeriod(period: number) {
+  try {
+    const currentYear = new Date().getFullYear();
+
+    // Definir rango de fechas según el trimestre
+    const startMonth = (period - 1) * 3; // 0, 3, 6, 9
+    const startDate = new Date(currentYear, startMonth, 1);
+    const endDate = new Date(currentYear, startMonth + 3, 0); // Último día del mes final
+
+    const newsLetters = await this.contentRepository.find({
+      where: {
+        isDeleted: false,
+        classification: 'Boletín',
+        createdAt: Between(startDate, endDate),
+      },
+      relations: {
+        user: true,
+      },
+      order: {
+        id: 'DESC',
+      },
+    });
+
+    return newsLetters;
+
+  } catch (error) {
+    handleDBErrors(error, 'findAllNewsLettersForPeriod - content');
+  }
+}
+
+
   async findOne( id: number ) {
     const script = await this.scriptRepository.findOne({
       where: { id, isDeleted: false },
@@ -295,14 +326,18 @@ export class ScriptsService {
       .createQueryBuilder('content')
       .where('content.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
       .andWhere('content.isDeleted = false')
+      .andWhere('content.classification != :excludedClassification', { excludedClassification: 'Menciones' }) // Excluir "Menciones"
       .limit(700)
-      .getMany(); // obtenemos los contenidos limitados
-  
+      .getMany();
+
     const total = contents.length;
-  
+
     const byDependenceMap = new Map<string, number>();
     const byClassificationMap = new Map<string, number>();
-  
+
+    let propios = 0;
+    let coproducidos = 0;
+
     for (const content of contents) {
       // Dependence count
       if (content.dependence) {
@@ -311,34 +346,46 @@ export class ScriptsService {
           (byDependenceMap.get(content.dependence) || 0) + 1,
         );
       }
-  
+
       // Classification count
       if (content.classification) {
         byClassificationMap.set(
           content.classification,
           (byClassificationMap.get(content.classification) || 0) + 1,
         );
+
+        // Propios
+        if (content.classification === 'Contenido General') {
+          propios += 1;
+        }
+
+        // Coproducidos
+        if (['Boletín', 'Editoriales'].includes(content.classification)) {
+          coproducidos += 1;
+        }
       }
     }
-  
+
     const byDependence = Array.from(byDependenceMap.entries()).map(([dependence, count]) => ({
       dependence,
       count,
     }));
-  
+
     const byClassification = Array.from(byClassificationMap.entries()).map(([classification, count]) => ({
       classification,
       count,
     }));
-  
+
     return {
       total,
+      propios,         // Contenidos Propios
+      coproducidos,    // Contenidos Coproducidos
       byDependence,
       byClassification,
     };
-  }
-  
-  
+}
+
+
 
   async getWeeklyReport() {
     const today = new Date()
