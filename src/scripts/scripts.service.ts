@@ -340,7 +340,14 @@ export class ScriptsService {
     let propios: { count: number, contents: Content[] } = { count: 0, contents: [] };
     let coproducidos: { count: number, contents: Content[] } = { count: 0, contents: [] };
 
+    const contentsByMonthMap = new Map<string, number>();
+
     for (const content of contents) {
+      // Agrupar por mes
+      const monthKey = format(new Date(content.createdAt), 'yyyy-MM');
+      contentsByMonthMap.set(monthKey, (contentsByMonthMap.get(monthKey) || 0) + 1);
+
+      // Dependencia
       if (content.dependence) {
         const existing = byDependenceMap.get(content.dependence) || { count: 0, contents: [] };
         existing.count += 1;
@@ -348,6 +355,7 @@ export class ScriptsService {
         byDependenceMap.set(content.dependence, existing);
       }
 
+      // Clasificación
       if (content.classification) {
         const existing = byClassificationMap.get(content.classification) || { count: 0, contents: [] };
         existing.count += 1;
@@ -378,13 +386,18 @@ export class ScriptsService {
       contents: data.contents,
     }));
 
-    // Obtener meses entre las fechas
-    const months: string[] = [];
+    // Generar los meses con conteo
+    const months: { month: string; count: number }[] = [];
     let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
     while (current <= end) {
-      months.push(format(current, 'MMMM', { locale: es }));
+      const key = format(current, 'yyyy-MM');
+      const name = format(current, 'MMMM', { locale: es });
+      months.push({
+        month: name.charAt(0).toUpperCase() + name.slice(1), // Capitalizar
+        count: contentsByMonthMap.get(key) || 0,
+      });
       current = addMonths(current, 1);
     }
 
@@ -394,7 +407,7 @@ export class ScriptsService {
       coproducidos,
       byDependence,
       byClassification,
-      months, // Meses en español
+      months,
     };
   }
 
