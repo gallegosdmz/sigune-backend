@@ -15,51 +15,51 @@ import { ChangePositionContentDto } from './dto/change-position-content.dto';
 @Injectable()
 export class ScriptsService {
   constructor(
-    @InjectRepository( Script )
+    @InjectRepository(Script)
     private readonly scriptRepository: Repository<Script>,
 
-    @InjectRepository( Content )
+    @InjectRepository(Content)
     private readonly contentRepository: Repository<Content>,
 
     private readonly dataSource: DataSource,
-  ) {}
-  
-  async create( createScriptDto: CreateScriptDto, user: User ) {
-      try {
-        const script = this.scriptRepository.create({
-          ...createScriptDto,
-          user
-        })
-        await this.scriptRepository.save( script );
+  ) { }
 
-        return script;
+  async create(createScriptDto: CreateScriptDto, user: User) {
+    try {
+      const script = this.scriptRepository.create({
+        ...createScriptDto,
+        user
+      })
+      await this.scriptRepository.save(script);
 
-      } catch ( error ) {
-        handleDBErrors( error, 'scripts' );
-      }
+      return script;
+
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
+    }
   }
 
-  async createContent( createContentDto: CreateContentDto, user: User ) {
+  async createContent(createContentDto: CreateContentDto, user: User) {
     const queryRunner = await this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     const { script, position, ...contentDetails } = createContentDto;
 
-    if ( !contentDetails.textContent ) contentDetails.textContent = 'Sin Contenido';
+    if (!contentDetails.textContent) contentDetails.textContent = 'Sin Contenido';
 
-    if ( user.role.permissions.includes('admin_user') ) {
-      if ( !script ) throw new NotFoundException(`Script not found`);
+    if (user.role.permissions.includes('admin_user')) {
+      if (!script) throw new NotFoundException(`Script not found`);
 
       contentDetails.status = true;
     }
-  
+
     let scriptDB;
-    if ( script !== null ) {
-      scriptDB = await this.findOne( script );
+    if (script !== null) {
+      scriptDB = await this.findOne(script);
     }
-  
-    const lastContent = await this.findLastContentInScript( script );
+
+    const lastContent = await this.findLastContentInScript(script);
 
     try {
       const content = await this.contentRepository.create({
@@ -68,23 +68,23 @@ export class ScriptsService {
         user,
         script: script !== null ? scriptDB : script,
       });
-      await queryRunner.manager.save( content );
+      await queryRunner.manager.save(content);
 
       await queryRunner.commitTransaction();
       await queryRunner.release();
 
       return content;
 
-    } catch ( error ) {
+    } catch (error) {
       await queryRunner.rollbackTransaction();
       await queryRunner.release();
 
-      handleDBErrors( error, 'scripts' );
+      handleDBErrors(error, 'scripts');
     }
   }
 
 
-  async findAll( paginationDto: PaginationDto ) {
+  async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
     try {
@@ -107,12 +107,12 @@ export class ScriptsService {
 
       return scripts;
 
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
-  async findAllContents( ) {
+  async findAllContents() {
     try {
       const contents = await this.contentRepository.find({
         where: {
@@ -128,12 +128,12 @@ export class ScriptsService {
 
       return contents;
 
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
-  async findAllContentsForUser( user: User ) {
+  async findAllContentsForUser(user: User) {
     try {
       const contents = await this.contentRepository.find({
         where: {
@@ -146,20 +146,20 @@ export class ScriptsService {
       });
 
       return contents;
-      
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
-  async findAllContentsForScript( idScript: number ) {
-    await this.findOne( idScript );
+  async findAllContentsForScript(idScript: number) {
+    await this.findOne(idScript);
 
     try {
       const contents = await this.contentRepository.find({
         where: {
           isDeleted: false,
-          script: {id: idScript},
+          script: { id: idScript },
         },
         relations: {
           script: {
@@ -173,49 +173,49 @@ export class ScriptsService {
       });
 
       return contents;
-      
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
   async findAllNewsLettersForPeriod(period: number) {
-  try {
-    const currentYear = new Date().getFullYear();
+    try {
+      const currentYear = new Date().getFullYear();
 
-    // Definir rango de fechas según el trimestre
-    const startMonth = (period - 1) * 3; // 0, 3, 6, 9
-    const startDate = new Date(currentYear, startMonth, 1);
-    const endDate = new Date(currentYear, startMonth + 3, 0); // Último día del mes final
+      // Definir rango de fechas según el trimestre
+      const startMonth = (period - 1) * 3; // 0, 3, 6, 9
+      const startDate = new Date(currentYear, startMonth, 1);
+      const endDate = new Date(currentYear, startMonth + 3, 0); // Último día del mes final
 
-    const newsLetters = await this.contentRepository.find({
-      where: {
-        isDeleted: false,
-        classification: 'Boletín',
-        createdAt: Between(startDate, endDate),
-      },
-      relations: {
-        user: true,
-      },
-      order: {
-        id: 'DESC',
-      },
-    });
+      const newsLetters = await this.contentRepository.find({
+        where: {
+          isDeleted: false,
+          classification: 'Boletín',
+          createdAt: Between(startDate, endDate),
+        },
+        relations: {
+          user: true,
+        },
+        order: {
+          id: 'DESC',
+        },
+      });
 
-    return newsLetters;
+      return newsLetters;
 
-  } catch (error) {
-    handleDBErrors(error, 'findAllNewsLettersForPeriod - content');
+    } catch (error) {
+      handleDBErrors(error, 'findAllNewsLettersForPeriod - content');
+    }
   }
-}
 
 
-  async findOne( id: number ) {
+  async findOne(id: number) {
     const script = await this.scriptRepository.findOne({
       where: { id, isDeleted: false },
       relations: { contents: { user: true }, user: true },
     });
-    if ( !script ) throw new NotFoundException(`Script with id: ${ id } not found`);
+    if (!script) throw new NotFoundException(`Script with id: ${id} not found`);
 
     return script;
   }
@@ -231,32 +231,32 @@ export class ScriptsService {
     try {
       const contents = await this.contentRepository.find({
         where: {
-          isDeleted: false, 
+          isDeleted: false,
           status: false,
         },
         relations: {
           user: true,
-        }, 
+        },
       });
 
       return contents;
 
-    } catch ( error ) {
-      handleDBErrors( error, 'script' );
+    } catch (error) {
+      handleDBErrors(error, 'script');
     }
   }
 
-  async findOneContent( id: number ) {
+  async findOneContent(id: number) {
     const content = await this.contentRepository.findOne({
       where: { id, isDeleted: false },
       relations: { script: { user: true }, user: true },
     });
-    if ( !content ) throw new NotFoundException(`Content with id: ${ id } not found`);
+    if (!content) throw new NotFoundException(`Content with id: ${id} not found`);
 
     return content;
   }
 
-  async findLastContentInScript( id: number ) {
+  async findLastContentInScript(id: number) {
     const content = await this.contentRepository.findOne({
       where: {
         script: {
@@ -266,58 +266,58 @@ export class ScriptsService {
       },
       order: { position: 'DESC' },
     });
-    if ( !content ) return 0;
+    if (!content) return 0;
 
     return content.position! + 1;
   }
 
   async update(id: number, updateScriptDto: UpdateScriptDto) {
-    const script = await this.findOne( id );
+    const script = await this.findOne(id);
 
     try {
-      Object.assign( script, updateScriptDto );
-      await this.scriptRepository.save( script );
+      Object.assign(script, updateScriptDto);
+      await this.scriptRepository.save(script);
 
-      return this.findOne( id );
+      return this.findOne(id);
 
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts')
+    } catch (error) {
+      handleDBErrors(error, 'scripts')
     }
   }
 
-  async updateContent( id: number, updateContentDto: UpdateContentDto, user: User ) {
-    const content = await this.findOneContent( id );
+  async updateContent(id: number, updateContentDto: UpdateContentDto, user: User) {
+    const content = await this.findOneContent(id);
 
-    if ( !user.role.permissions.includes('admin_user') && user.id !== content.user.id ) {
-      throw new UnauthorizedException(`This user is not authorized for modifications to content: ${ id }`);
+    if (!user.role.permissions.includes('admin_user') && user.id !== content.user.id) {
+      throw new UnauthorizedException(`This user is not authorized for modifications to content: ${id}`);
     }
 
-    if ( updateContentDto.script ) {
-      await this.findOne( updateContentDto.script );
+    if (updateContentDto.script) {
+      await this.findOne(updateContentDto.script);
     }
-    
+
     try {
-      Object.assign( content, updateContentDto );
-      await this.contentRepository.save( content );
+      Object.assign(content, updateContentDto);
+      await this.contentRepository.save(content);
 
-      return this.findOneContent( id );
+      return this.findOneContent(id);
 
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
-  async changePositionContent( id: number, changePositionContent: ChangePositionContentDto ) {
-    const content = await this.findOneContent( id );
+  async changePositionContent(id: number, changePositionContent: ChangePositionContentDto) {
+    const content = await this.findOneContent(id);
 
     try {
-     Object.assign( content, { position: changePositionContent.position } );
-     await this.contentRepository.save( content );
-     
-     return this.findOneContent( id );
-    
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+      Object.assign(content, { position: changePositionContent.position });
+      await this.contentRepository.save(content);
+
+      return this.findOneContent(id);
+
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
 
@@ -326,66 +326,75 @@ export class ScriptsService {
       .createQueryBuilder('content')
       .where('content.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
       .andWhere('content.isDeleted = false')
-      .andWhere('content.classification != :excludedClassification', { excludedClassification: 'Menciones' }) // Excluir "Menciones"
+      .andWhere('content.classification != :excludedClassification', { excludedClassification: 'Menciones' })
       .limit(700)
       .getMany();
 
     const total = contents.length;
 
-    const byDependenceMap = new Map<string, number>();
-    const byClassificationMap = new Map<string, number>();
+    const byDependenceMap = new Map<string, { count: number; contents: Content[] }>();
+    const byClassificationMap = new Map<string, { count: number; contents: Content[] }>();
 
-    let propios = 0;
-    let coproducidos = 0;
+    let propios: { count: number, contents: Content[] } = {
+      count: 0,
+      contents: [],
+    };
+
+    let coproducidos: { count: number, contents: Content[] } = {
+      count: 0,
+      contents: [],
+    };
 
     for (const content of contents) {
-      // Dependence count
+      // Dependence
       if (content.dependence) {
-        byDependenceMap.set(
-          content.dependence,
-          (byDependenceMap.get(content.dependence) || 0) + 1,
-        );
+        const existing = byDependenceMap.get(content.dependence) || { count: 0, contents: [] };
+        existing.count += 1;
+        existing.contents.push(content);
+        byDependenceMap.set(content.dependence, existing);
       }
 
-      // Classification count
+      // Classification
       if (content.classification) {
-        byClassificationMap.set(
-          content.classification,
-          (byClassificationMap.get(content.classification) || 0) + 1,
-        );
+        const existing = byClassificationMap.get(content.classification) || { count: 0, contents: [] };
+        existing.count += 1;
+        existing.contents.push(content);
+        byClassificationMap.set(content.classification, existing);
 
         // Propios
         if (content.classification === 'Contenido General') {
-          propios += 1;
+          propios.count += 1;
+          propios.contents.push(content);
         }
 
         // Coproducidos
         if (['Boletín', 'Editoriales'].includes(content.classification)) {
-          coproducidos += 1;
+          coproducidos.count += 1;
+          coproducidos.contents.push(content);
         }
       }
     }
 
-    const byDependence = Array.from(byDependenceMap.entries()).map(([dependence, count]) => ({
+    const byDependence = Array.from(byDependenceMap.entries()).map(([dependence, data]) => ({
       dependence,
-      count,
+      count: data.count,
+      contents: data.contents,
     }));
 
-    const byClassification = Array.from(byClassificationMap.entries()).map(([classification, count]) => ({
+    const byClassification = Array.from(byClassificationMap.entries()).map(([classification, data]) => ({
       classification,
-      count,
+      count: data.count,
+      contents: data.contents,
     }));
 
     return {
       total,
-      propios,         // Contenidos Propios
-      coproducidos,    // Contenidos Coproducidos
+      propios,
+      coproducidos,
       byDependence,
       byClassification,
     };
-}
-
-
+  }
 
   async getWeeklyReport() {
     const today = new Date()
@@ -438,7 +447,7 @@ export class ScriptsService {
     const today = new Date();
     const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-    return this.countContentsByDateRange(startOfYear, today); 
+    return this.countContentsByDateRange(startOfYear, today);
   }
 
   async remove(id: number) {
@@ -447,42 +456,42 @@ export class ScriptsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    await this.findOne( id );
+    await this.findOne(id);
 
     try {
-      
-      await queryRunner.manager.update( Script, { id }, { isDeleted: true } );
-      await queryRunner.manager.update( Content, { script: id }, { isDeleted: true } );
-      
+
+      await queryRunner.manager.update(Script, { id }, { isDeleted: true });
+      await queryRunner.manager.update(Content, { script: id }, { isDeleted: true });
+
 
       await queryRunner.commitTransaction();
       await queryRunner.release();
-      
+
       return {
-        message: `Script with id: ${ id } is removed successfully`,
+        message: `Script with id: ${id} is removed successfully`,
       }
 
-    } catch ( error ) {
+    } catch (error) {
       await queryRunner.rollbackTransaction();
       await queryRunner.release();
 
-      handleDBErrors( error, 'scripts' );
+      handleDBErrors(error, 'scripts');
     }
   }
 
-  async removeContent( id: number ) {
-    await this.findOneContent( id );
+  async removeContent(id: number) {
+    await this.findOneContent(id);
 
     try {
-      await this.contentRepository.update( id, { isDeleted : true } );
+      await this.contentRepository.update(id, { isDeleted: true });
 
       return {
-        message: `Content with id: ${ id } is removed successfully`,
+        message: `Content with id: ${id} is removed successfully`,
       }
 
-    } catch ( error ) {
-      handleDBErrors( error, 'scripts' );
+    } catch (error) {
+      handleDBErrors(error, 'scripts');
     }
   }
-  
+
 }
