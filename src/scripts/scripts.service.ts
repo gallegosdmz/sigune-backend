@@ -334,79 +334,64 @@ export class ScriptsService {
 
     const total = contents.length;
 
-    const byDependenceMap = new Map<string, { count: number; contents: Content[] }>();
-    const byClassificationMap = new Map<string, { count: number; contents: Content[] }>();
-
-    let propios: { count: number, contents: Content[] } = { count: 0, contents: [] };
-    let coproducidos: { count: number, contents: Content[] } = { count: 0, contents: [] };
-
-    const contentsByMonthMap = new Map<string, number>();
+    const monthlyMap = new Map<string, {
+      propios: { count: number, contents: Content[] },
+      coproducidos: { count: number, contents: Content[] }
+    }>();
 
     for (const content of contents) {
-      // Agrupar por mes
       const monthKey = format(new Date(content.createdAt), 'yyyy-MM');
-      contentsByMonthMap.set(monthKey, (contentsByMonthMap.get(monthKey) || 0) + 1);
 
-      // Dependencia
-      if (content.dependence) {
-        const existing = byDependenceMap.get(content.dependence) || { count: 0, contents: [] };
-        existing.count += 1;
-        existing.contents.push(content);
-        byDependenceMap.set(content.dependence, existing);
+      if (!monthlyMap.has(monthKey)) {
+        monthlyMap.set(monthKey, {
+          propios: { count: 0, contents: [] },
+          coproducidos: { count: 0, contents: [] },
+        });
       }
 
-      // Clasificación
-      if (content.classification) {
-        const existing = byClassificationMap.get(content.classification) || { count: 0, contents: [] };
-        existing.count += 1;
-        existing.contents.push(content);
-        byClassificationMap.set(content.classification, existing);
+      const monthData = monthlyMap.get(monthKey)!;
 
-        if (content.classification === 'Contenido General') {
-          propios.count += 1;
-          propios.contents.push(content);
-        }
+      if (content.classification === 'Contenido General') {
+        monthData.propios.count += 1;
+        monthData.propios.contents.push(content);
+      }
 
-        if (['Boletín', 'Editoriales'].includes(content.classification)) {
-          coproducidos.count += 1;
-          coproducidos.contents.push(content);
-        }
+      if (['Boletín', 'Editoriales'].includes(content.classification)) {
+        monthData.coproducidos.count += 1;
+        monthData.coproducidos.contents.push(content);
       }
     }
 
-    const byDependence = Array.from(byDependenceMap.entries()).map(([dependence, data]) => ({
-      dependence,
-      count: data.count,
-      contents: data.contents,
-    }));
+    const months: {
+      month: string;
+      propios: { count: number, contents: Content[] };
+      coproducidos: { count: number, contents: Content[] };
+      subtotal: number;
+    }[] = [];
 
-    const byClassification = Array.from(byClassificationMap.entries()).map(([classification, data]) => ({
-      classification,
-      count: data.count,
-      contents: data.contents,
-    }));
-
-    // Generar los meses con conteo
-    const months: { month: string; count: number }[] = [];
     let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
     while (current <= end) {
       const key = format(current, 'yyyy-MM');
       const name = format(current, 'MMMM', { locale: es });
+      const data = monthlyMap.get(key) || {
+        propios: { count: 0, contents: [] },
+        coproducidos: { count: 0, contents: [] },
+      };
+
       months.push({
-        month: name.charAt(0).toUpperCase() + name.slice(1), // Capitalizar
-        count: contentsByMonthMap.get(key) || 0,
+        month: name.charAt(0).toUpperCase() + name.slice(1),
+        propios: data.propios,
+        coproducidos: data.coproducidos,
+        subtotal: data.propios.count + data.coproducidos.count,
       });
+
       current = addMonths(current, 1);
     }
 
     return {
       total,
-      propios,
-      coproducidos,
-      byDependence,
-      byClassification,
       months,
     };
   }
