@@ -339,6 +339,9 @@ export class ScriptsService {
       coproducidos: { count: number, contents: Content[] }
     }>();
 
+    let totalPropios = 0;
+    let totalCoproducidos = 0;
+
     for (const content of contents) {
       const monthKey = format(new Date(content.createdAt), 'yyyy-MM');
 
@@ -354,11 +357,13 @@ export class ScriptsService {
       if (content.classification === 'Contenido General') {
         monthData.propios.count += 1;
         monthData.propios.contents.push(content);
+        totalPropios += 1;
       }
 
       if (['Boletín', 'Editoriales'].includes(content.classification)) {
         monthData.coproducidos.count += 1;
         monthData.coproducidos.contents.push(content);
+        totalCoproducidos += 1;
       }
     }
 
@@ -392,9 +397,12 @@ export class ScriptsService {
 
     return {
       total,
+      totalPropios,
+      totalCoproducidos,
       months,
     };
   }
+
 
   async getWeeklyReport() {
     const today = new Date()
