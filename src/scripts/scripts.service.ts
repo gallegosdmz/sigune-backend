@@ -11,6 +11,8 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { ChangePositionContentDto } from './dto/change-position-content.dto';
+import { format, addMonths, isBefore } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 @Injectable()
 export class ScriptsService {
@@ -335,18 +337,10 @@ export class ScriptsService {
     const byDependenceMap = new Map<string, { count: number; contents: Content[] }>();
     const byClassificationMap = new Map<string, { count: number; contents: Content[] }>();
 
-    let propios: { count: number, contents: Content[] } = {
-      count: 0,
-      contents: [],
-    };
-
-    let coproducidos: { count: number, contents: Content[] } = {
-      count: 0,
-      contents: [],
-    };
+    let propios: { count: number, contents: Content[] } = { count: 0, contents: [] };
+    let coproducidos: { count: number, contents: Content[] } = { count: 0, contents: [] };
 
     for (const content of contents) {
-      // Dependence
       if (content.dependence) {
         const existing = byDependenceMap.get(content.dependence) || { count: 0, contents: [] };
         existing.count += 1;
@@ -354,20 +348,17 @@ export class ScriptsService {
         byDependenceMap.set(content.dependence, existing);
       }
 
-      // Classification
       if (content.classification) {
         const existing = byClassificationMap.get(content.classification) || { count: 0, contents: [] };
         existing.count += 1;
         existing.contents.push(content);
         byClassificationMap.set(content.classification, existing);
 
-        // Propios
         if (content.classification === 'Contenido General') {
           propios.count += 1;
           propios.contents.push(content);
         }
 
-        // Coproducidos
         if (['Boletín', 'Editoriales'].includes(content.classification)) {
           coproducidos.count += 1;
           coproducidos.contents.push(content);
@@ -387,12 +378,23 @@ export class ScriptsService {
       contents: data.contents,
     }));
 
+    // Obtener meses entre las fechas
+    const months: string[] = [];
+    let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+    while (current <= end) {
+      months.push(format(current, 'MMMM', { locale: es }));
+      current = addMonths(current, 1);
+    }
+
     return {
       total,
       propios,
       coproducidos,
       byDependence,
       byClassification,
+      months, // Meses en español
     };
   }
 
