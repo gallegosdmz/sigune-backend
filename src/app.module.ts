@@ -9,6 +9,8 @@ import { UsersModule } from './users/users.module';
 import { ScriptsModule } from './scripts/scripts.module';
 import { FilesModule } from './files/files.module';
 import { NewslettersModule } from './newsletters/newsletters.module';
+import { DailySummaryModule } from './daily-summary/daily-summary.module';
+import { WeeklySummarysModule } from './weekly-summarys/weekly-summarys.module';
 
 @Module({
   imports: [
@@ -40,6 +42,10 @@ import { NewslettersModule } from './newsletters/newsletters.module';
     ScriptsModule,
 
     NewslettersModule,
+
+    DailySummaryModule,
+
+    WeeklySummarysModule,
   ],
 })
 export class AppModule {}

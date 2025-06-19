@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateScriptDto } from './dto/create-script.dto';
 import { UpdateScriptDto } from './dto/update-script.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -50,9 +50,7 @@ export class ScriptsService {
 
     if (!contentDetails.textContent) contentDetails.textContent = 'Sin Contenido';
 
-    if (user.role.permissions.includes('admin_user')) {
-      if (!script) throw new NotFoundException(`Script not found`);
-
+    if (user.role.permissions.includes('admin_user') && script !== null) {
       contentDetails.status = true;
     }
 
@@ -119,12 +117,16 @@ export class ScriptsService {
       const contents = await this.contentRepository.find({
         where: {
           isDeleted: false,
+          type: 'Nota',
         },
         relations: {
           script: {
             user: true,
           },
           user: true,
+        },
+        order: {
+          id: 'DESC',
         },
       });
 

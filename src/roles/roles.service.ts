@@ -76,6 +76,58 @@ export class RolesService {
     }
   }
 
+  async closeSystem() {
+    const role = await this.roleRepository.findOne({
+      where: { name: 'REPORTERO', isDeleted: false },
+    });
+    if (!role) throw new NotFoundException('Role with name REPORTERO not found');
+
+    try {
+      // Permisos a eliminar
+      const permissionsToRemove = ['create_content', 'update_content'];
+      const originalLength = role.permissions.length;
+      role.permissions = role.permissions.filter(
+        (perm) => !permissionsToRemove.includes(perm)
+      );
+
+      // Solo guardar si hubo cambios
+      if (role.permissions.length !== originalLength) {
+        await this.roleRepository.save(role);
+      }
+
+      return role;
+
+    } catch (error) {
+      handleDBErrors(error, 'closeSystem - roles');
+    }
+  }
+
+  async openSystem() {
+    const role = await this.roleRepository.findOne({
+      where: { name: 'REPORTERO', isDeleted: false },
+    });
+    if (!role) throw new NotFoundException('Role with name REPORTERO not found');
+
+    try {
+      // Permisos a agregar
+      const permissionsToAdd = ['create_content', 'update_content'];
+      let updated = false;
+      for (const perm of permissionsToAdd) {
+        if (!role.permissions.includes(perm)) {
+          role.permissions.push(perm);
+          updated = true;
+        }
+      }
+      // Solo guardar si hubo cambios
+      if (updated) {
+        await this.roleRepository.save(role);
+      }
+      return role;
+    } catch (error) {
+      handleDBErrors(error, 'openSystem - roles');
+    }
+  }
+
   async remove(id: number) {
     await this.findOne( id );
 
@@ -90,6 +142,5 @@ export class RolesService {
       handleDBErrors( error, 'roles' );
     }
   }
-
 
 }

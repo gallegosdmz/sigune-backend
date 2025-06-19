@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "src/auth/entities/user.entity";
 import { Script } from "./script.entity";
+import { DailySummary } from "src/daily-summary/entities/daily-summary.entity";
 
 @Entity('contents')
 export class Content {
@@ -39,6 +40,9 @@ export class Content {
 
     @ManyToOne(() => Script, (script) => script.contents, {nullable: true})
     script?: Script;
+
+    @ManyToMany(() => DailySummary, (dailySummary) => dailySummary.contents, {nullable: true})
+    dailySummarys?: DailySummary[];
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;

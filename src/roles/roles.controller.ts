@@ -32,6 +32,18 @@ export class RolesController {
     return this.rolesService.findOne( +id );
   }
 
+  @Patch('closeSystem')
+  @Auth(ValidPermissions.admin_user)
+  closeSystem() {
+    return this.rolesService.closeSystem();
+  }
+
+  @Patch('openSystem')
+  @Auth(ValidPermissions.admin_user)
+  openSystem() {
+    return this.rolesService.openSystem();
+  }
+
   @Patch(':id')
   @Auth( ValidPermissions.update_role )
   update(
