@@ -292,10 +292,6 @@ export class ScriptsService {
   async updateContent(id: number, updateContentDto: UpdateContentDto, user: User) {
     const content = await this.findOneContent(id);
 
-    if (!user.role.permissions.includes('admin_user') && user.id !== content.user.id) {
-      throw new UnauthorizedException(`This user is not authorized for modifications to content: ${id}`);
-    }
-
     if (updateContentDto.script) {
       await this.findOne(updateContentDto.script);
     }
