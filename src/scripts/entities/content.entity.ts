@@ -1,7 +1,8 @@
-import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "src/auth/entities/user.entity";
 import { Script } from "./script.entity";
 import { DailySummary } from "src/daily-summary/entities/daily-summary.entity";
+import { ContentFile } from "./content-file.entity";
 
 @Entity('contents')
 export class Content {
@@ -26,9 +27,6 @@ export class Content {
     @Column('varchar', {length: 150})
     classification: string;
 
-    @Column('text', { nullable: true })
-    url?: string;
-
     @Column('int2', { nullable: true })
     position?: number;
 
@@ -43,6 +41,9 @@ export class Content {
 
     @ManyToMany(() => DailySummary, (dailySummary) => dailySummary.contents, {nullable: true})
     dailySummarys?: DailySummary[];
+
+    @OneToMany(() => ContentFile, (contentFile) => contentFile.content)
+    contentsFiles: ContentFile[];
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;

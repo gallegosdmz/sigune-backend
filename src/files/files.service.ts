@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { google } from 'googleapis';
+import { ContentFile } from 'src/scripts/entities/content-file.entity';
+import { ScriptsService } from 'src/scripts/scripts.service';
 import { handleDBErrors } from 'src/utils';
 import { PassThrough } from 'stream';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class FilesService {
   private driveClient;
 
-  constructor() {
+  constructor(
+    @InjectRepository(ContentFile)
+    private readonly contentFileRepository: Repository<ContentFile>,
+
+    private readonly scriptService: ScriptsService,
+  ) {
     const auth = new google.auth.GoogleAuth({
       keyFile: 'src/files/drive.json',
       scopes: ['https://www.googleapis.com/auth/drive'],
@@ -16,7 +25,7 @@ export class FilesService {
     this.driveClient = google.drive({ version: 'v3', auth });
   }
 
-  async uploadToDrive(file: Express.Multer.File) {
+  async uploadToDrive(contentId: number, file: Express.Multer.File) {
     const stream = new PassThrough();
     stream.end(file.buffer);
 
@@ -49,6 +58,10 @@ export class FilesService {
       fields: 'id, name, mimeType, webViewLink, webContentLink',
     });
 
+    const content = await this.scriptService.findOneContent(contentId);
+
+    const contentFile = this.contentFileRepository.create({url: fileMeta.data.webViewLink, content});
+    await this.contentFileRepository.save(contentFile);
 
     return {
       fileId: fileMeta.data.id,

@@ -97,6 +97,7 @@ export class ScriptsService {
         relations: {
           contents: {
             user: true,
+            contentsFiles: true,
           },
           user: true,
         },
@@ -124,6 +125,7 @@ export class ScriptsService {
             user: true,
           },
           user: true,
+          contentsFiles: true,
         },
         order: {
           id: 'DESC',
@@ -146,6 +148,7 @@ export class ScriptsService {
         },
         relations: {
           script: true,
+          contentsFiles: true,
         },
       });
 
@@ -170,6 +173,7 @@ export class ScriptsService {
             user: true,
           },
           user: true,
+          contentsFiles: true,
         },
         order: {
           position: 'ASC', // Ordenar de menor a mayor
@@ -217,7 +221,7 @@ export class ScriptsService {
   async findOne(id: number) {
     const script = await this.scriptRepository.findOne({
       where: { id, isDeleted: false },
-      relations: { contents: { user: true }, user: true },
+      relations: { contents: { user: true, contentsFiles: true }, user: true },
     });
     if (!script) throw new NotFoundException(`Script with id: ${id} not found`);
 
@@ -240,6 +244,7 @@ export class ScriptsService {
         },
         relations: {
           user: true,
+          contentsFiles: true,
         },
       });
 
@@ -253,7 +258,7 @@ export class ScriptsService {
   async findOneContent(id: number) {
     const content = await this.contentRepository.findOne({
       where: { id, isDeleted: false },
-      relations: { script: { user: true }, user: true },
+      relations: { script: { user: true }, user: true, contentsFiles: true },
     });
     if (!content) throw new NotFoundException(`Content with id: ${id} not found`);
 

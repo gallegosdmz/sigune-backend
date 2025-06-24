@@ -152,7 +152,7 @@ export class DailySummaryService {
         textContent: newContentData.textContent || 'Sin contenido',
         classification: newContentData.classification || 'Contenido General',
         dependence: newContentData.dependence,
-        url: newContentData.url,
+        //url: newContentData.url,
         position: newContentData.position,
         status: newContentData.status !== undefined ? newContentData.status : false,
         isDeleted: false

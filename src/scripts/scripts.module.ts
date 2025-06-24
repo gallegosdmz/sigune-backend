@@ -5,14 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Script } from './entities/script.entity';
 import { Content } from './entities/content.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { ContentFile } from './entities/content-file.entity';
 
 @Module({
   controllers: [ScriptsController],
   providers: [ScriptsService],
   imports: [
-    TypeOrmModule.forFeature([ Script, Content ]),
+    TypeOrmModule.forFeature([ Script, Content, ContentFile]),
     AuthModule,
   ],
-  exports: [ TypeOrmModule ],
+  exports: [ TypeOrmModule, ScriptsService ],
 })
 export class ScriptsModule {}
