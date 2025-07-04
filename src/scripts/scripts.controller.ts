@@ -51,8 +51,10 @@ export class ScriptsController {
 
   @Get('contents')
   @Auth( ValidPermissions.view_contents )
-  findAllContents() {
-    return this.scriptsService.findAllContents();
+  findAllContents(
+    @GetUser() user: User
+  ) {
+    return this.scriptsService.findAllContents(user);
   }
   
   @Get('contents-for-user')

@@ -113,12 +113,32 @@ export class ScriptsService {
     }
   }
 
-  async findAllContents() {
+  async findAllContents(user: User) {
     try {
-      const contents = await this.contentRepository.find({
+      if (user.role.name === 'JEFE DEL DEPARTAMENTO DE NOTICIAS' || user.role.name === 'AUXILIAR DE INFORMÁTICA') {
+        return await this.contentRepository.find({
+          where: {
+            isDeleted: false,
+            type: 'Nota',
+          },
+          relations: {
+            script: {
+              user: true,
+            },
+            user: true,
+            contentsFiles: true,
+          },
+          order: {
+            id: 'DESC',
+          },
+        });
+      }
+
+      return await this.contentRepository.find({
         where: {
           isDeleted: false,
           type: 'Nota',
+          status: true,
         },
         relations: {
           script: {
@@ -132,7 +152,6 @@ export class ScriptsService {
         },
       });
 
-      return contents;
 
     } catch (error) {
       handleDBErrors(error, 'scripts');
